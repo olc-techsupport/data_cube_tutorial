@@ -1,8 +1,8 @@
 # Building Geospatial Data Cubes for Earth Data Science
 ### A Tutorial for Tribal College Students and Faculty
-**Author:** Lilly Jones, PhD, Daear Consulting, LLC
-**Primary Focus:** Pine Ridge (Oglala Lakota)
-**Level:** Beginner   
+**Author:** Lilly Jones, PhD, Daear Consulting, LLC  
+**Primary Focus:** Pine Ridge (Oglala Lakota)  
+**Level:** Beginner  
 **License:** AGPL-3.0 license
 
 ## What Is a Data Cube?
