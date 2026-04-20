@@ -3,7 +3,7 @@
 **Author:** Lilly Jones, PhD, Daear Consulting, LLC
 **Primary Focus:** Pine Ridge (Oglala Lakota)
 **Level:** Beginner   
-**License:** GNU
+**License:** AGPL-3.0 license
 
 ## What Is a Data Cube?
 When scientists study the environment, they collect data across three dimensions
