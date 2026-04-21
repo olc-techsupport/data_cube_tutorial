@@ -1,13 +1,14 @@
 """
-cube_utils.py Shared helper functions for the tribal data cube tutorial.
+cube_utils.py — Shared helper functions for the tribal data cube tutorial.
+
 These utilities are used across multiple notebooks. They handle:
 - Downloading and caching boundary data for Pine Ridge and SD Tribal Nations
 - Fetching MODIS NDVI and gridMET climate data
 - Common xarray operations used throughout the tutorial
 
 All functions follow the tutorial's design principles:
-- Real data only (some synthetic data is used only for learning, never for analysis)
-- Cache to data/directory to avoid repeated downloads
+- Real data only — no synthetic data
+- Cache to data/ directory to avoid repeated downloads
 - Clear error messages when data is unavailable
 - Inline comments explaining what each step does
 """
@@ -21,7 +22,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-# Paths
+# ── Paths ─────────────────────────────────────────────────────────────────────
 TUTORIAL_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR      = TUTORIAL_ROOT / "data"
 CACHE_DIR     = DATA_DIR / "cache"
@@ -31,14 +32,14 @@ try:
 except FileExistsError:
     pass
 
-# Pine Ridge bounding box
-# (min_lon, min_lat, max_lon, max_lat) in WGS84
+# ── Pine Ridge bounding box ───────────────────────────────────────────────────
+# (min_lon, min_lat, max_lon, max_lat) — WGS84
 PINE_RIDGE_BBOX = (-103.5, 42.5, -101.5, 43.8)
 
 # ORNL DAAC MODIS Web Service
 ORNL_BASE     = "https://modis.ornl.gov/rst/api/v1"
 MODIS_PRODUCT = "MOD13Q1"
-MODIS_BAND    = "_250m_16_days_NDVI"
+MODIS_BAND    = "250m_16_days_NDVI"
 NDVI_SCALE    = 0.0001
 NDVI_FILL     = -3000
 
@@ -46,7 +47,7 @@ NDVI_FILL     = -3000
 GRIDMET_BASE  = "https://thredds.northwestknowledge.net/thredds/dodsC/MET"
 
 
-# Boundary data
+# ── Boundary data ──────────────────────────────────────────────────────────────
 
 def load_pine_ridge_boundary():
     """
@@ -90,7 +91,8 @@ def load_pine_ridge_boundary():
 
 def load_sd_tribal_boundaries():
     """
-    Load boundaries for all Oceti Sakowin Nations from Census TIGER.
+    Load boundaries for all 8 South Dakota Tribal Nations from Census TIGER.
+
     Returns a GeoDataFrame in EPSG:4326 with a 'common_name' column.
     Downloads and caches on first call.
     """
@@ -144,7 +146,7 @@ def load_sd_tribal_boundaries():
     return sd
 
 
-# MODIS NDVI
+# ── MODIS NDVI ────────────────────────────────────────────────────────────────
 
 def fetch_ndvi_timeseries(
     lat: float,
@@ -155,17 +157,20 @@ def fetch_ndvi_timeseries(
 ) -> pd.DataFrame:
     """
     Fetch MODIS MOD13Q1 NDVI time series for a single point via ORNL DAAC.
+
     The ORNL DAAC API limits requests to 10 tiles (~160 days) per call.
     This function fetches one year at a time and concatenates the results.
     Results are cached to data/cache/.
 
     Parameters
+    ----------
     lat, lon   : WGS84 coordinates of the point
     start_year : First year to fetch (MODIS available from 2000)
     end_year   : Last year to fetch
     site_name  : Name used for the cache file
 
     Returns
+    -------
     DataFrame with columns: date, ndvi (scaled 0–1), pixel_count
     """
     cache_file = CACHE_DIR / f"ndvi_{site_name.replace(' ', '_').lower()}_{start_year}_{end_year}.csv"
@@ -177,44 +182,64 @@ def fetch_ndvi_timeseries(
     print(f"Downloading MODIS NDVI for {site_name} ({start_year}–{end_year})...")
     parts = []
 
-    for year in range(start_year, end_year + 1):
-        url = f"{ORNL_BASE}/{MODIS_PRODUCT}/subset"
-        params = {
-            "latitude":      lat,
-            "longitude":     lon,
-            "startDate":     f"A{year}001",
-            "endDate":       f"A{year}353",
-            "kmAboveBelow":  2,
-            "kmLeftRight":   2,
-        }
-        try:
-            r = requests.get(url, params=params,
-                             headers={"Accept": "application/json"},
-                             timeout=120)
-            r.raise_for_status()
-            data = r.json()
+    # MOD13Q1 has ~23 composites per year (365÷16), exceeding the 10-tile API limit.
+    # Split each year into 3 chunks of ≤8 composites each:
+    #   Chunk 1: days 001–113  (composites on days 1,17,33,49,65,81,97,113  = 8 tiles)
+    #   Chunk 2: days 129–241  (composites on days 129,145,...,241          = 8 tiles)
+    #   Chunk 3: days 257–353  (composites on days 257,273,...,353          = 7 tiles)
+    YEAR_CHUNKS = [("001", "113"), ("129", "241"), ("257", "353")]
 
-            for subset in data.get("subset", []):
-                if subset.get("band") != MODIS_BAND:
-                    continue
-                raw_vals = [
-                    v for v in subset.get("data", [])
-                    if v is not None and v > NDVI_FILL
-                ]
-                if not raw_vals:
-                    continue
-                cal_date = subset.get("calendar_date", "")
-                try:
-                    date = pd.to_datetime(cal_date)
-                except Exception:
-                    continue
-                parts.append({
-                    "date":        date,
-                    "ndvi":        round(float(np.mean(raw_vals)) * NDVI_SCALE, 4),
-                    "pixel_count": len(raw_vals),
-                })
-        except Exception as e:
-            warnings.warn(f"NDVI fetch failed for {year}: {e}", UserWarning)
+    import time as _time
+    total_chunks = (end_year - start_year + 1) * len(YEAR_CHUNKS)
+    chunk_num    = 0
+
+    for year in range(start_year, end_year + 1):
+        year_parts = 0
+        for start_doy, end_doy in YEAR_CHUNKS:
+            chunk_num += 1
+            url = f"{ORNL_BASE}/{MODIS_PRODUCT}/subset"
+            params = {
+                "latitude":     lat,
+                "longitude":    lon,
+                "startDate":    f"A{year}{start_doy}",
+                "endDate":      f"A{year}{end_doy}",
+                "kmAboveBelow": 2,
+                "kmLeftRight":  2,
+            }
+            try:
+                r = requests.get(url, params=params,
+                                 headers={"Accept": "application/json"},
+                                 timeout=30)
+                r.raise_for_status()
+                data = r.json()
+
+                for subset in data.get("subset", []):
+                    if subset.get("band") != MODIS_BAND:
+                        continue
+                    raw_vals = [
+                        v for v in subset.get("data", [])
+                        if v is not None and v > NDVI_FILL
+                    ]
+                    if not raw_vals:
+                        continue
+                    cal_date = subset.get("calendar_date", "")
+                    try:
+                        date = pd.to_datetime(cal_date)
+                    except Exception:
+                        continue
+                    parts.append({
+                        "date":        date,
+                        "ndvi":        round(float(np.mean(raw_vals)) * NDVI_SCALE, 4),
+                        "pixel_count": len(raw_vals),
+                    })
+                    year_parts += 1
+            except Exception as e:
+                warnings.warn(
+                    f"NDVI fetch failed for {year} chunk {start_doy}-{end_doy}: {e}",
+                    UserWarning,
+                )
+                _time.sleep(0.3)
+        print(f"  {year}: {year_parts} obs  [{chunk_num}/{total_chunks} chunks]", flush=True)
 
     if not parts:
         raise RuntimeError(
@@ -228,7 +253,7 @@ def fetch_ndvi_timeseries(
     return df
 
 
-# gridMET climate data
+# ── gridMET climate data ───────────────────────────────────────────────────────
 
 def fetch_gridmet_point(
     lat: float,
@@ -242,25 +267,28 @@ def fetch_gridmet_point(
     Fetch gridMET daily climate data for a single point via OPeNDAP.
 
     Parameters
+    ----------
     lat, lon   : WGS84 coordinates
-    variable   : gridMET variable name, ex. 'tmmx' (max temp), 'pr' (precip),
+    variable   : gridMET variable name, e.g. 'tmmx' (max temp), 'pr' (precip),
                  'rmax' (max RH), 'vs' (wind speed), 'erc' (energy release component)
     start_year : First year to fetch (gridMET available from 1979)
     end_year   : Last year to fetch
     site_name  : Name used for the cache file
 
     Returns
+    -------
     DataFrame with columns: date, {variable}
 
     gridMET variable reference
-    tmmx  - Maximum temperature (K)
-    tmmn  - Minimum temperature (K)
-    pr    - Precipitation (mm)
-    rmax  - Maximum relative humidity (%)
-    rmin  - Minimum relative humidity (%)
-    vs    - Wind speed (m/s)
-    erc   - Energy release component (dimensionless)
-    bi    - Burning index (dimensionless)
+    --------------------------
+    tmmx  — Maximum temperature (K)
+    tmmn  — Minimum temperature (K)
+    pr    — Precipitation (mm)
+    rmax  — Maximum relative humidity (%)
+    rmin  — Minimum relative humidity (%)
+    vs    — Wind speed (m/s)
+    erc   — Energy release component (dimensionless)
+    bi    — Burning index (dimensionless)
     """
     try:
         import xarray as xr
@@ -314,7 +342,7 @@ def fetch_gridmet_point(
     return df
 
 
-# xarray helpers
+# ── xarray helpers ────────────────────────────────────────────────────────────
 
 def timeseries_to_dataarray(
     df: pd.DataFrame,
@@ -325,10 +353,12 @@ def timeseries_to_dataarray(
 ) -> "xr.DataArray":
     """
     Convert a time series DataFrame to a labeled xarray DataArray.
-    This is the first step in building a data cube, taking tabular data
+
+    This is the first step in building a data cube — taking tabular data
     and adding dimensional labels.
 
     Parameters
+    ----------
     df        : DataFrame with date and value columns
     date_col  : Name of the date column
     value_col : Name of the value column
@@ -336,6 +366,7 @@ def timeseries_to_dataarray(
     attrs     : Metadata attributes to attach to the DataArray
 
     Returns
+    -------
     xr.DataArray with 'time' dimension
     """
     try:
@@ -361,11 +392,13 @@ def compute_growing_season_mean(
     Compute annual growing season mean for a time series DataArray.
 
     Parameters
+    ----------
     da     : DataArray with a 'time' dimension
     months : List of month integers to include in growing season.
              Default: [5, 6, 7, 8, 9] (May–September, Great Plains growing season)
 
     Returns
+    -------
     DataArray with annual growing season means, indexed by year
     """
     if months is None:
@@ -381,9 +414,12 @@ def compute_anomaly(da: "xr.DataArray") -> "xr.DataArray":
     Compute anomaly (departure from long-term mean) for a DataArray.
 
     Parameters
+    ----------
     da : DataArray (any temporal resolution)
 
     Returns
+    -------
     DataArray of same shape with values as departures from mean
     """
     return da - da.mean()
+

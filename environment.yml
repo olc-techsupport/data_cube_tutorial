@@ -26,6 +26,7 @@ dependencies:
   - contextily>=1.4
   - hvplot>=0.9         
   - holoviews>=1.17
+  - seaborn>=0.12
   # Notebooks
   - jupyter>=1.0
   - jupyterlab>=4.0
