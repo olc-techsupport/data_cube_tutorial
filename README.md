@@ -69,7 +69,7 @@ Start with `00_orientation.ipynb`.
 
 ## Data
 All data is downloaded at runtime from public sources. Nothing is committed
-to this repository. See `data/README.md` for the full data inventory and
+to this repository. See `README.md` for the full data inventory and
 citation information.
 
 **Sources used in this tutorial:**
