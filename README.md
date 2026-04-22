@@ -69,7 +69,7 @@ Start with `00_orientation.ipynb`.
 
 ## Data
 All data is downloaded at runtime from public sources. Nothing is committed
-to this repository. See `data/README.md` for the full data inventory and
+to this repository. See `README.md` for the full data inventory and
 citation information.
 
 **Sources used in this tutorial:**
@@ -80,13 +80,6 @@ citation information.
 # Data
 All data in this tutorial is downloaded at runtime from public sources.
 Nothing is committed to this repository.
-
-## Directory Structure
-```
-data/
-├── cache/          # Downloaded data, created automatically on first run
-└── README.md       # This file
-```
 The `cache/` directory is created automatically when you run the notebooks.
 It is listed in `.gitignore` and should never be committed.
 
