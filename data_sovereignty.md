@@ -7,9 +7,9 @@ Every dataset in this tutorial covers the lands of the Oglala Lakota Nation and 
 Oceti Sakowin Nations where appropriate. That fact carries responsibilities.
 
 This document introduces four frameworks that guide responsible use of data
-about Indigenous Peoples and their lands. These are not bureaucratic checkboxes.
-They are expressions of the rights and authority of Indigenous communities over
-information that describes their homelands, their environments, and their futures.
+about Indigenous Peoples and their lands. These are expressions of the rights and 
+authority of Indigenous communities over information that describes their homelands, 
+their environments, and their futures.
 
 ## OCAP® (Ownership, Control, Access, Possession)
 **Reference:** https://fnigc.ca/ocap-training/

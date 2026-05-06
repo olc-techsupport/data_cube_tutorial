@@ -1,14 +1,14 @@
 """
-cube_utils.py — Shared helper functions for the tribal data cube tutorial.
+cube_utils.py shared helper functions for the tribal data cube tutorial.
 
 These utilities are used across multiple notebooks. They handle:
-- Downloading and caching boundary data for Pine Ridge and SD Tribal Nations
+- Downloading and caching boundary data for Pine Ridge and other Tribal Nations
 - Fetching MODIS NDVI and gridMET climate data
 - Common xarray operations used throughout the tutorial
 
 All functions follow the tutorial's design principles:
-- Real data only — no synthetic data
-- Cache to data/ directory to avoid repeated downloads
+- Real data only, no synthetic data
+- Cache to data/directory to avoid repeated downloads
 - Clear error messages when data is unavailable
 - Inline comments explaining what each step does
 """
@@ -39,7 +39,7 @@ PINE_RIDGE_BBOX = (-103.5, 42.5, -101.5, 43.8)
 # Rosebud bounding box
 ROSEBUD_BBOX = (-101.5, 42.8, -99.8, 43.6)
 
-# All SD Tribal Nations combined bounding box
+# All Oceti Sakowin Tribal Nations combined bounding box
 SD_TRIBAL_BBOX = (-104.0, 43.8, -96.4, 45.9)
 
 # ORNL DAAC MODIS Web Service
@@ -68,7 +68,7 @@ def load_pine_ridge_boundary():
     except ImportError:
         raise ImportError("geopandas is required: conda install geopandas")
 
-    cache_path = CACHE_DIR / "pine_ridge_boundary.geojson"
+    cache_path = CACHE_DIR/"pine_ridge_boundary.geojson"
 
     if cache_path.exists():
         return gpd.read_file(cache_path)
@@ -97,7 +97,7 @@ def load_pine_ridge_boundary():
 
 def load_sd_tribal_boundaries():
     """
-    Load boundaries for all 8 South Dakota Tribal Nations from Census TIGER.
+    Load boundaries for all Oceti Sakowin Nations from Census TIGER.
 
     Returns a GeoDataFrame in EPSG:4326 with a 'common_name' column.
     Downloads and caches on first call.
@@ -108,7 +108,7 @@ def load_sd_tribal_boundaries():
     except ImportError:
         raise ImportError("geopandas is required: conda install geopandas")
 
-    cache_path = CACHE_DIR / "sd_tribal_boundaries.geojson"
+    cache_path = CACHE_DIR/"sd_tribal_boundaries.geojson"
 
     SD_CENSUS_NAMES = [
         "Pine Ridge", "Rosebud", "Standing Rock",
@@ -148,7 +148,7 @@ def load_sd_tribal_boundaries():
     sd["common_name"] = sd["NAME"].map(COMMON_NAMES)
     sd.to_file(cache_path, driver="GeoJSON")
 
-    print(f"SD Tribal boundaries saved to {cache_path.name}")
+    print(f"Oceti Sakowin boundaries saved to {cache_path.name}")
     return sd
 
 
@@ -272,7 +272,7 @@ def fetch_gridmet_point(
 
     Parameters
     lat, lon   : WGS84 coordinates
-    variable   : gridMET variable name, e.g. 'tmmx' (max temp), 'pr' (precip),
+    variable   : gridMET variable name, ex. 'tmmx' (max temp), 'pr' (precip),
                  'rmax' (max RH), 'vs' (wind speed), 'erc' (energy release component)
     start_year : First year to fetch (gridMET available from 1979)
     end_year   : Last year to fetch
@@ -282,14 +282,14 @@ def fetch_gridmet_point(
     DataFrame with columns: date, {variable}
 
     gridMET variable reference
-    tmmx  — Maximum temperature (K)
-    tmmn  — Minimum temperature (K)
-    pr    — Precipitation (mm)
-    rmax  — Maximum relative humidity (%)
-    rmin  — Minimum relative humidity (%)
-    vs    — Wind speed (m/s)
-    erc   — Energy release component (dimensionless)
-    bi    — Burning index (dimensionless)
+    tmmx  : Maximum temperature (K)
+    tmmn  : Minimum temperature (K)
+    pr    : Precipitation (mm)
+    rmax  : Maximum relative humidity (%)
+    rmin  : Minimum relative humidity (%)
+    vs    : Wind speed (m/s)
+    erc   : Energy release component (dimensionless)
+    bi    : Burning index (dimensionless)
     """
     try:
         import xarray as xr
@@ -360,7 +360,7 @@ def timeseries_to_dataarray(
     """
     Convert a time series DataFrame to a labeled xarray DataArray.
 
-    This is the first step in building a data cube — taking tabular data
+    This is the first step in building a data cube is taking tabular data
     and adding dimensional labels.
 
     Parameters
@@ -600,7 +600,7 @@ def download_3dep_tiles(
         except Exception as e:
             print(f"\r    Failed: {e}")
             if out_path.exists():
-                out_path.unlink()  # remove partial download
+                out_path.unlink()  
 
     print(f"\nDownloaded {len(downloaded)} tile(s) to: {output_dir}")
     return downloaded
@@ -628,8 +628,7 @@ def get_3dep_coverage_report(
     >>> print(report)
     """
     print(f"\n3DEP Coverage Report: {name}")
-    print("=" * 55)
-
+    
     report = {"area": name, "bbox": bbox, "datasets": {}}
 
     for key, label in THREEDEP_DATASETS.items():
@@ -648,7 +647,7 @@ def get_3dep_coverage_report(
             }
 
             status = f" {n} tiles (latest: {latest}, {total_mb:.0f} MB)" \
-                     if n > 0 else "✗ No coverage"
+                     if n > 0 else "No coverage"
             print(f"  {label:<45}: {status}")
 
         except Exception as e:

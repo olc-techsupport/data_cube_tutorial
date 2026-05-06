@@ -14,11 +14,10 @@ can ask questions like:
 > *"What was the vegetation condition at Pine Ridge in August 2012 compared to
 > August 2022? How does that change compare to the drought record?"*
 
-A spreadsheet can't answer that question. A data cube can.
+A spreadsheet can't answer that question, but a data cube can.
 
 This tutorial teaches you to build and query geospatial data cubes in Python
-using real satellite and climate data centered on Pine Ridge and South Dakota
-Tribal lands.
+using satellite and climate data centered on Pine Ridge.
 
 ## Why Pine Ridge?
 Pine Ridge is home to the Oglala Lakota Nation and is one of the largest
@@ -27,7 +26,7 @@ badlands, ponderosa pine hills, shaped by climate, fire, drought, and the
 management decisions of the people who steward it.
 
 Understanding environmental change on these lands through data science is not
-just a technical exercise. It is a contribution to Tribal sovereignty, land
+just a technical exercise, it is a contribution to Tribal sovereignty, land
 management capacity, and the long-term health of the community.
 
 ## Data Sovereignty
@@ -54,36 +53,25 @@ referenced throughout the tutorial.
 ## Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/daearconsulting/tribal_datacube_tutorial
+git clone https://github.com/olc-techsupport/data_cube_tutorial
 cd tribal_datacube_tutorial
 
 # Create and activate the environment
 conda env create -f environment.yml
 conda activate tribal-datacube
-
-# Launch JupyterLab
-jupyter lab notebooks/
 ```
 
 Start with `00_orientation.ipynb`.
 
 ## Data
-All data is downloaded at runtime from public sources. Nothing is committed
-to this repository. See `README.md` for the full data inventory and
-citation information.
+See `README.md` for the full data inventory and citation information. 
+The `cache/` directory is created automatically when you run the notebooks.
+It is listed in `.gitignore` and should never be committed.
 
 **Sources used in this tutorial:**
 - MODIS MOD13Q1 NDVI (250m, 16-day): NASA/ORNL DAAC
 - gridMET daily climate (4km): University of Idaho Climatology Lab
 - Census TIGER AIANNH boundaries: US Census Bureau
-
-# Data
-All data in this tutorial is downloaded at runtime from public sources.
-Nothing is committed to this repository.
-The `cache/` directory is created automatically when you run the notebooks.
-It is listed in `.gitignore` and should never be committed.
-
-## Data Sources
 
 ### MODIS MOD13Q1 NDVI
 - **What:** 16-day composite NDVI at 250m resolution
@@ -135,8 +123,5 @@ advanced session, then 08 as a capstone project.
 Estimated time: 2–3 hours per notebook for a classroom session, or self-paced.
 
 ## Acknowledgments
-This work is part of a broader effort to build
-earth data science capacity at Tribal colleges and universities.
-
-Data governance frameworks referenced: OCAP®, CARE Principles, FAIR Principles,
-IEEE 2890-2025.
+This work is part of a broader effort to build earth data science capacity at Tribal colleges and universities.
+Data governance frameworks referenced: OCAP®, CARE Principles, FAIR Principles, IEEE 2890-2025.
